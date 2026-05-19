@@ -1,0 +1,69 @@
+# GitHub Actions workflow pour tester le projet
+# (Optionnel - pour CI/CD)
+
+name: Test Microservices
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      zookeeper:
+        image: confluentinc/cp-zookeeper:latest
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+        ports:
+          - 2181:2181
+
+      kafka:
+        image: confluentinc/cp-kafka:latest
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        ports:
+          - 9092:9092
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        cd order-service && npm install && cd ..
+        cd delivery-service && npm install && cd ..
+        cd tracking-service && npm install && cd ..
+        cd api-gateway && npm install && cd ..
+    
+    - name: Start Order Service
+      run: cd order-service && npm start &
+      
+    - name: Start Delivery Service
+      run: cd delivery-service && npm start &
+      
+    - name: Start Tracking Service
+      run: cd tracking-service && npm start &
+      
+    - name: Start API Gateway
+      run: cd api-gateway && npm start &
+    
+    - name: Wait for services
+      run: sleep 10
+    
+    - name: Test API
+      run: |
+        curl -f http://localhost:3000/health || exit 1
+        echo "✓ API Gateway is running"

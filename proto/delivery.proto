@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package delivery;
+
+// Service de gestion des livreurs et affectations
+service DeliveryService {
+  // Assigner un livreur à une commande
+  rpc AssignDriver(AssignDriverRequest) returns (DeliveryResponse);
+  
+  // Obtenir les informations de livraison
+  rpc GetDelivery(GetDeliveryRequest) returns (DeliveryResponse);
+  
+  // Mettre à jour le statut de livraison
+  rpc UpdateDeliveryStatus(UpdateDeliveryStatusRequest) returns (DeliveryResponse);
+  
+  // Lister les livreurs disponibles
+  rpc ListAvailableDrivers(ListAvailableDriversRequest) returns (ListDriversResponse);
+  
+  // Obtenir les informations d'un livreur
+  rpc GetDriver(GetDriverRequest) returns (DriverResponse);
+}
+
+// Messages pour AssignDriver
+message AssignDriverRequest {
+  string order_id = 1;
+  string driver_id = 2; // optional, auto-assign if empty
+}
+
+// Messages pour GetDelivery
+message GetDeliveryRequest {
+  string order_id = 1;
+}
+
+// Messages pour UpdateDeliveryStatus
+message UpdateDeliveryStatusRequest {
+  string order_id = 1;
+  string status = 2;
+  Location current_location = 3;
+}
+
+// Messages pour ListAvailableDrivers
+message ListAvailableDriversRequest {
+  Location near_location = 1;
+  double radius_km = 2;
+}
+
+message ListDriversResponse {
+  repeated DriverResponse drivers = 1;
+}
+
+// Messages pour GetDriver
+message GetDriverRequest {
+  string driver_id = 1;
+}
+
+// Réponse pour les livraisons
+message DeliveryResponse {
+  string delivery_id = 1;
+  string order_id = 2;
+  string driver_id = 3;
+  string driver_name = 4;
+  string driver_phone = 5;
+  string vehicle_type = 6;
+  string vehicle_plate = 7;
+  string status = 8; // ASSIGNED, PICKED_UP, IN_TRANSIT, DELIVERED
+  Location current_location = 9;
+  string assigned_at = 10;
+  string picked_up_at = 11;
+  string delivered_at = 12;
+}
+
+// Réponse pour les livreurs
+message DriverResponse {
+  string driver_id = 1;
+  string name = 2;
+  string phone = 3;
+  string vehicle_type = 4;
+  string vehicle_plate = 5;
+  bool is_available = 6;
+  Location current_location = 7;
+  double rating = 8;
+  int32 total_deliveries = 9;
+}
+
+// Message pour la localisation
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+}

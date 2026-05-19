@@ -1,0 +1,24 @@
+{
+  "name": "delivery-system",
+  "version": "1.0.0",
+  "description": "Système de livraison en temps réel - Architecture Microservices",
+  "scripts": {
+    "install:all": "npm install && cd api-gateway && npm install && cd ../order-service && npm install && cd ../delivery-service && npm install && cd ../tracking-service && npm install && cd ../client && npm install",
+    "start:order": "cd order-service && npm start",
+    "start:delivery": "cd delivery-service && npm start",
+    "start:tracking": "cd tracking-service && npm start",
+    "start:gateway": "cd api-gateway && npm start",
+    "start:client": "cd client && npm start",
+    "proto:generate": "node scripts/generate-proto.js"
+  },
+  "keywords": [
+    "microservices",
+    "grpc",
+    "kafka",
+    "nodejs",
+    "rest",
+    "graphql"
+  ],
+  "author": "Votre équipe",
+  "license": "MIT"
+}

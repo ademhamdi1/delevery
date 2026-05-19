@@ -1,0 +1,22 @@
+{
+  "name": "order-service",
+  "version": "1.0.0",
+  "description": "Service de gestion des commandes",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "proto:generate": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./src/proto --grpc_out=grpc_js:./src/proto --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` -I ../proto ../proto/order.proto"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.9.0",
+    "@grpc/proto-loader": "^0.7.10",
+    "kafkajs": "^2.2.4",
+    "sqlite3": "^5.1.6",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

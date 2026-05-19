@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package order;
+
+// Service de gestion des commandes
+service OrderService {
+  // Créer une nouvelle commande
+  rpc CreateOrder(CreateOrderRequest) returns (OrderResponse);
+  
+  // Obtenir une commande par ID
+  rpc GetOrder(GetOrderRequest) returns (OrderResponse);
+  
+  // Lister toutes les commandes
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  
+  // Mettre à jour une commande
+  rpc UpdateOrder(UpdateOrderRequest) returns (OrderResponse);
+  
+  // Annuler une commande
+  rpc CancelOrder(CancelOrderRequest) returns (OrderResponse);
+}
+
+// Messages pour CreateOrder
+message CreateOrderRequest {
+  string customer_name = 1;
+  string customer_phone = 2;
+  string pickup_address = 3;
+  string delivery_address = 4;
+  string package_description = 5;
+  double package_weight = 6;
+}
+
+// Messages pour GetOrder
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+// Messages pour ListOrders
+message ListOrdersRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string status = 3; // optional filter
+}
+
+message ListOrdersResponse {
+  repeated OrderResponse orders = 1;
+  int32 total = 2;
+}
+
+// Messages pour UpdateOrder
+message UpdateOrderRequest {
+  string order_id = 1;
+  string status = 2;
+  string delivery_address = 3;
+}
+
+// Messages pour CancelOrder
+message CancelOrderRequest {
+  string order_id = 1;
+  string reason = 2;
+}
+
+// Réponse commune pour les commandes
+message OrderResponse {
+  string order_id = 1;
+  string customer_name = 2;
+  string customer_phone = 3;
+  string pickup_address = 4;
+  string delivery_address = 5;
+  string package_description = 6;
+  double package_weight = 7;
+  string status = 8; // PENDING, ASSIGNED, IN_TRANSIT, DELIVERED, CANCELLED
+  string created_at = 9;
+  string updated_at = 10;
+}

@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package tracking;
+
+// Service de suivi en temps réel
+service TrackingService {
+  // Démarrer le suivi d'une livraison
+  rpc StartTracking(StartTrackingRequest) returns (TrackingResponse);
+  
+  // Mettre à jour la position
+  rpc UpdateLocation(UpdateLocationRequest) returns (TrackingResponse);
+  
+  // Obtenir la position actuelle
+  rpc GetCurrentLocation(GetCurrentLocationRequest) returns (TrackingResponse);
+  
+  // Obtenir l'historique des positions
+  rpc GetLocationHistory(GetLocationHistoryRequest) returns (LocationHistoryResponse);
+  
+  // Calculer le temps estimé d'arrivée
+  rpc CalculateETA(CalculateETARequest) returns (ETAResponse);
+}
+
+// Messages pour StartTracking
+message StartTrackingRequest {
+  string order_id = 1;
+  string driver_id = 2;
+  Location pickup_location = 3;
+  Location delivery_location = 4;
+}
+
+// Messages pour UpdateLocation
+message UpdateLocationRequest {
+  string order_id = 1;
+  Location current_location = 2;
+  double speed = 3; // km/h
+  double heading = 4; // degrees
+}
+
+// Messages pour GetCurrentLocation
+message GetCurrentLocationRequest {
+  string order_id = 1;
+}
+
+// Messages pour GetLocationHistory
+message GetLocationHistoryRequest {
+  string order_id = 1;
+  string from_time = 2;
+  string to_time = 3;
+}
+
+message LocationHistoryResponse {
+  repeated LocationPoint points = 1;
+}
+
+message LocationPoint {
+  Location location = 1;
+  string timestamp = 2;
+  double speed = 3;
+}
+
+// Messages pour CalculateETA
+message CalculateETARequest {
+  string order_id = 1;
+  Location current_location = 2;
+  Location destination = 3;
+}
+
+message ETAResponse {
+  int32 estimated_minutes = 1;
+  double distance_km = 2;
+  string arrival_time = 3;
+}
+
+// Réponse pour le suivi
+message TrackingResponse {
+  string tracking_id = 1;
+  string order_id = 2;
+  Location current_location = 3;
+  Location pickup_location = 4;
+  Location delivery_location = 5;
+  double distance_traveled_km = 6;
+  double distance_remaining_km = 7;
+  int32 estimated_minutes = 8;
+  string status = 9;
+  string last_updated = 10;
+}
+
+// Message pour la localisation
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+}
