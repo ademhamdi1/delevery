@@ -47,6 +47,7 @@ services:
       - kafka
     volumes:
       - ./order-service/data:/app/data
+      - ./proto:/proto
     networks:
       - delivery-network
     restart: unless-stopped
@@ -64,6 +65,8 @@ services:
       - KAFKA_BROKER=kafka:29092
     depends_on:
       - kafka
+    volumes:
+      - ./proto:/proto
     networks:
       - delivery-network
     restart: unless-stopped
@@ -84,6 +87,7 @@ services:
       - kafka
     volumes:
       - ./tracking-service/data:/app/data
+      - ./proto:/proto
     networks:
       - delivery-network
     restart: unless-stopped
@@ -105,6 +109,8 @@ services:
       - order-service
       - delivery-service
       - tracking-service
+    volumes:
+      - ./proto:/proto
     networks:
       - delivery-network
     restart: unless-stopped
