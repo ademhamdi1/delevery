@@ -1,310 +1,398 @@
-# Système de Livraison en Temps Réel
+# 🚚 Système de Livraison en Temps Réel - Microservices
 
-## Description du Projet
+## 📋 Table des matières
 
-Application de gestion de livraison en temps réel basée sur une architecture microservices utilisant Node.js.
+1. [Vue d'ensemble](#vue-densemble)
+2. [Architecture](#architecture)
+3. [Technologies utilisées](#technologies-utilisées)
+4. [Prérequis](#prérequis)
+5. [Installation](#installation)
+6. [Démarrage](#démarrage)
+7. [Tests](#tests)
+8. [API Documentation](#api-documentation)
+9. [Déploiement](#déploiement)
 
-## Architecture
+---
 
-L'application est composée de :
-- **API Gateway** : Point d'entrée principal (REST + GraphQL → gRPC)
-- **Order Service** : Gestion des commandes (SQLite3)
-- **Delivery Service** : Gestion des livreurs et affectations (RxDB)
-- **Tracking Service** : Suivi en temps réel des livraisons (SQLite3)
-- **Kafka Broker** : Communication asynchrone entre microservices
-- **Client** : Interface de test
+## 🎯 Vue d'ensemble
 
-## Technologies Utilisées
+Système de livraison en temps réel basé sur une architecture microservices avec:
+- **Auto-assignment** intelligent des livreurs
+- **Tracking GPS** en temps réel
+- **Calcul automatique** de distance et ETA
+- **Communication asynchrone** via Kafka
+- **APIs REST et GraphQL**
 
-- **Node.js** : Runtime JavaScript
-- **gRPC** : Communication inter-services
-- **REST** : API HTTP classique
-- **GraphQL** : Requêtes flexibles
-- **Kafka** : Messaging asynchrone
-- **SQLite3** : Base de données SQL
-- **RxDB** : Base de données NoSQL
-- **Express** : Framework web
-- **Apollo Server** : Serveur GraphQL
+---
 
-## Structure du Projet
+## 🏗️ Architecture
 
 ```
-delivery-system/
-├── api-gateway/          # API Gateway (REST + GraphQL)
-├── order-service/        # Microservice de gestion des commandes
-├── delivery-service/     # Microservice de gestion des livreurs
-├── tracking-service/     # Microservice de suivi en temps réel
-├── proto/                # Fichiers .proto pour gRPC
-├── client/               # Interface client de test
-├── docs/                 # Documentation
-└── docker-compose.yml    # Configuration Docker (optionnel)
+┌─────────────────────────────────────────────────────────────┐
+│                        API GATEWAY                          │
+│                    (REST + GraphQL)                         │
+│                     Port: 3000                              │
+└────────────┬────────────────────────────────┬───────────────┘
+             │                                │
+             │ gRPC                          │ gRPC
+             ▼                                ▼
+┌────────────────────┐         ┌──────────────────────────┐
+│  ORDER SERVICE     │         │   DELIVERY SERVICE       │
+│  Port: 50051       │         │   Port: 50052            │
+│  DB: SQLite        │         │   DB: RxDB (Memory)      │
+└─────────┬──────────┘         └────────┬─────────────────┘
+          │                              │
+          │         Kafka Events         │
+          │    ┌──────────────────┐     │
+          └───►│  order.created   │◄────┘
+               │delivery.assigned │
+               │tracking.updated  │
+               └────────┬─────────┘
+                        │
+                        ▼
+               ┌────────────────────┐
+               │ TRACKING SERVICE   │
+               │ Port: 50053        │
+               │ DB: SQLite         │
+               └────────────────────┘
 ```
 
-## Fonctionnalités Principales
+---
 
-### Order Service
-- Créer une commande
-- Consulter les commandes
-- Modifier une commande
-- Annuler une commande
-- Rechercher des commandes
+## 🛠️ Technologies utilisées
 
-### Delivery Service
-- Gérer les livreurs (disponibilité, position)
-- Assigner un livreur à une commande
-- Mettre à jour le statut du livreur
+### Backend
+- **Node.js** v18+
+- **gRPC** - Communication inter-services
+- **Express.js** - API REST
+- **Apollo Server** - GraphQL
+- **Kafka** - Messaging asynchrone
+- **SQLite3** - Base de données (Order, Tracking)
+- **RxDB** - Base de données réactive (Delivery)
 
-### Tracking Service
-- Suivre la position en temps réel
-- Historique des positions
-- Calculer le temps estimé d'arrivée
+### Infrastructure
+- **Docker** - Conteneurisation
+- **Kafka + Zookeeper** - Message broker
 
-## Communication
+---
 
-### REST Endpoints
-- `POST /api/orders` - Créer une commande
-- `GET /api/orders` - Liste des commandes
-- `GET /api/orders/:id` - Détails d'une commande
-- `PUT /api/orders/:id` - Modifier une commande
-- `DELETE /api/orders/:id` - Annuler une commande
+## 📦 Prérequis
 
-### GraphQL Queries
+- **Node.js** >= 18.0.0
+- **npm** >= 9.0.0
+- **Docker Desktop** (pour Kafka)
+- **Git**
+
+---
+
+## 🚀 Installation
+
+### 1. Cloner le projet
+```bash
+git clone <votre-repo>
+cd soaaaaaa
+```
+
+### 2. Installer les dépendances
+```bash
+# Installer pour tous les services
+npm install
+
+# Ou individuellement
+cd order-service && npm install
+cd ../delivery-service && npm install
+cd ../tracking-service && npm install
+cd ../api-gateway && npm install
+```
+
+### 3. Démarrer Kafka
+```bash
+docker-compose up -d
+```
+
+### 4. Créer les topics Kafka
+```bash
+docker exec -it kafka bash
+
+kafka-topics --create --topic order.created --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+kafka-topics --create --topic delivery.assigned --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+kafka-topics --create --topic delivery.status.changed --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+kafka-topics --create --topic tracking.updated --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+
+exit
+```
+
+---
+
+## ▶️ Démarrage
+
+### Démarrage manuel (4 terminaux)
+
+**Terminal 1 - Order Service:**
+```bash
+cd order-service
+npm start
+```
+
+**Terminal 2 - Delivery Service:**
+```bash
+cd delivery-service
+npm start
+```
+
+**Terminal 3 - Tracking Service:**
+```bash
+cd tracking-service
+npm start
+```
+
+**Terminal 4 - API Gateway:**
+```bash
+cd api-gateway
+npm start
+```
+
+### Démarrage automatique (Windows)
+```bash
+./start-all.sh
+```
+
+### Arrêt
+```bash
+./stop-all.sh
+```
+
+---
+
+## 🧪 Tests
+
+### REST API avec PowerShell
+
+#### Créer une commande
+```powershell
+$order = Invoke-RestMethod -Uri "http://localhost:3000/api/orders" -Method Post -ContentType "application/json" -Body '{"customer_name":"Test User","customer_phone":"+216 20 123 456","pickup_address":"Tunis","delivery_address":"La Marsa","package_weight":1.5}'
+
+$orderId = $order.order_id
+Write-Host "Order ID: $orderId"
+```
+
+#### Vérifier la livraison (auto-assignée)
+```powershell
+Start-Sleep -Seconds 3
+Invoke-RestMethod -Uri "http://localhost:3000/api/deliveries/$orderId"
+```
+
+#### Vérifier le tracking (auto-créé)
+```powershell
+Invoke-RestMethod -Uri "http://localhost:3000/api/tracking/$orderId"
+```
+
+#### Mettre à jour la position
+```powershell
+$location = @{
+    order_id = $orderId
+    current_location = @{
+        latitude = 36.8150
+        longitude = 10.1700
+    }
+} | ConvertTo-Json -Depth 3
+
+Invoke-RestMethod -Uri "http://localhost:3000/api/tracking/$orderId/location" -Method Put -ContentType "application/json" -Body $location
+```
+
+### GraphQL
+
+Ouvrez http://localhost:3000/graphql dans votre navigateur.
+
+#### Query - Livreurs disponibles
 ```graphql
-query {
-  order(id: "123") {
-    id
-    customer {
-      name
-      address
-    }
-    delivery {
-      driver {
-        name
-        phone
-      }
-      status
-      currentLocation {
-        lat
-        lng
-      }
-      estimatedArrival
-    }
+{
+  availableDrivers {
+    name
+    vehicle_type
+    rating
+    phone
   }
 }
 ```
 
-### gRPC Services
-- Communication entre API Gateway et microservices
-- Appels synchrones haute performance
-
-### Kafka Topics
-- `order.created` - Nouvelle commande créée
-- `order.updated` - Commande mise à jour
-- `delivery.assigned` - Livreur assigné
-- `delivery.status.changed` - Statut de livraison changé
-- `tracking.location.updated` - Position mise à jour
-
-## Installation
-
-### Prérequis
-- Node.js (v18+)
-- npm ou yarn
-- Kafka (local ou Docker)
-
-### Installation des dépendances
-
-```bash
-# Installer les dépendances pour tous les services
-npm run install:all
-
-# Ou manuellement pour chaque service
-cd api-gateway && npm install
-cd order-service && npm install
-cd delivery-service && npm install
-cd tracking-service && npm install
-cd client && npm install
-```
-
-### Configuration de Kafka
-
-```bash
-# Avec Docker
-docker-compose up -d kafka zookeeper
-
-# Ou installation locale
-# Suivre la documentation Kafka
-```
-
-## Exécution
-
-### Démarrer tous les services
-
-```bash
-# Terminal 1 - Kafka
-docker-compose up kafka zookeeper
-
-# Terminal 2 - Order Service
-cd order-service && npm start
-
-# Terminal 3 - Delivery Service
-cd delivery-service && npm start
-
-# Terminal 4 - Tracking Service
-cd tracking-service && npm start
-
-# Terminal 5 - API Gateway
-cd api-gateway && npm start
-
-# Terminal 6 - Client
-cd client && npm start
-```
-
-### Ports par défaut
-- API Gateway: `http://localhost:3000`
-- Order Service: `localhost:50051` (gRPC)
-- Delivery Service: `localhost:50052` (gRPC)
-- Tracking Service: `localhost:50053` (gRPC)
-- Client: `http://localhost:8080`
-
-## Tests
-
-```bash
-# Tester les endpoints REST
-npm run test:rest
-
-# Tester GraphQL
-npm run test:graphql
-
-# Tester gRPC
-npm run test:grpc
-```
-
-## Documentation
-
-- [Architecture détaillée](./docs/architecture.md)
-- [Endpoints REST](./docs/rest-api.md)
-- [Schéma GraphQL](./docs/graphql-schema.md)
-- [Services gRPC](./docs/grpc-services.md)
-- [Topics Kafka](./docs/kafka-topics.md)
-- [Bases de données](./docs/databases.md)
-
-## Scénario d'utilisation
-
-1. **Client crée une commande** via REST
-2. **Order Service** enregistre la commande et publie `order.created` sur Kafka
-3. **Delivery Service** reçoit l'événement et assigne un livreur disponible
-4. **Delivery Service** publie `delivery.assigned` sur Kafka
-5. **Tracking Service** commence à suivre la position du livreur
-6. **Client** consulte le statut via GraphQL (commande + livreur + position)
-7. **Tracking Service** publie `tracking.location.updated` régulièrement
-8. **Client** reçoit les mises à jour en temps réel
-
-## Scénarios de test
-
-### Scénario complet : Créer et suivre une livraison
-
-1. **Créer une commande** (REST)
-```bash
-curl -X POST http://localhost:3000/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "customer_name": "Ahmed Ben Ali",
-    "customer_phone": "+216 20 123 456",
-    "pickup_address": "Avenue Habib Bourguiba, Tunis",
-    "delivery_address": "Rue de la Liberté, La Marsa",
-    "package_description": "Documents",
-    "package_weight": 0.5
-  }'
-```
-
-2. **Vérifier l'auto-assignment** (GraphQL)
+#### Mutation - Créer une commande
 ```graphql
-query {
-  order(id: "ORDER_ID_FROM_STEP_1") {
+mutation {
+  createOrder(
+    customer_name: "Test GraphQL"
+    customer_phone: "+216 20 555 666"
+    pickup_address: "Tunis"
+    delivery_address: "Sousse"
+    package_weight: 2.0
+  ) {
     order_id
+    customer_name
+    status
+  }
+}
+```
+
+#### Query - Commande complète avec livraison et tracking
+```graphql
+{
+  order(id: "VOTRE_ORDER_ID") {
+    order_id
+    customer_name
     status
     delivery {
       driver {
         name
-        phone
+        vehicle_type
       }
       status
+      delivered_at
+    }
+    tracking {
+      current_location {
+        latitude
+        longitude
+      }
+      distance_remaining_km
+      estimated_minutes
     }
   }
 }
 ```
 
-3. **Mettre à jour la position** (REST)
-```bash
-curl -X PUT http://localhost:3000/api/tracking/ORDER_ID/location \
-  -H "Content-Type: application/json" \
-  -d '{
-    "current_location": {
-      "latitude": 36.8100,
-      "longitude": 10.1750
-    },
-    "speed": 35.5
-  }'
-```
+### gRPC avec Postman
 
-4. **Consulter le tracking** (GraphQL)
-```graphql
-query {
-  tracking(orderId: "ORDER_ID") {
-    current_location {
-      latitude
-      longitude
-    }
-    distance_remaining_km
-    estimated_minutes
-  }
-}
-```
-
-## Points forts du projet
-
-✅ **Architecture microservices complète** avec 3 services indépendants  
-✅ **gRPC** pour la communication inter-services (HTTP/2 + Protobuf)  
-✅ **REST API** pour les opérations CRUD classiques  
-✅ **GraphQL** pour des requêtes flexibles et agrégées  
-✅ **Kafka** pour la communication asynchrone événementielle  
-✅ **SQLite3** et **RxDB** pour la persistance des données  
-✅ **Séparation des responsabilités** claire entre les services  
-✅ **Documentation complète** avec exemples et schémas  
-✅ **Auto-assignment** intelligent des livreurs  
-✅ **Calcul d'ETA** en temps réel  
-
-## Améliorations possibles (optionnelles)
-
-- 🐳 Conteneurisation avec Docker pour chaque microservice
-- ☁️ Déploiement sur le cloud (AWS, Azure, GCP)
-- 🔐 Authentification JWT
-- 📱 Application mobile pour les livreurs
-- 🔔 Service de notifications en temps réel (WebSocket)
-- 📊 Dashboard de monitoring
-- 🧪 Tests unitaires et d'intégration
-- 🔄 Circuit breaker pour la résilience
-- 📈 Métriques et observabilité (Prometheus, Grafana)
-
-## Auteurs
-
-- [Votre Nom]
-- [Nom Membre 2]
-- [Nom Membre 3] (optionnel)
-
-## Licence
-
-Projet académique - A.U. 2025-26
+Voir le fichier [GRPC-TESTS.md](./GRPC-TESTS.md) pour tous les tests gRPC.
 
 ---
 
-**Note**: Ce projet répond à tous les critères du cahier des charges :
-- ✅ 3 microservices indépendants
-- ✅ API Gateway (REST + GraphQL)
-- ✅ Communication gRPC (HTTP/2 + Protobuf)
-- ✅ Kafka pour les événements asynchrones
-- ✅ Bases de données séparées (SQLite3 + RxDB)
-- ✅ Documentation complète
-- ✅ Architecture claire et maintenable
-#   d e l e v e r y  
- 
+## 📚 API Documentation
+
+### REST API Endpoints
+
+#### Orders
+- `POST /api/orders` - Créer une commande
+- `GET /api/orders` - Lister les commandes
+- `GET /api/orders/:id` - Obtenir une commande
+- `PUT /api/orders/:id` - Mettre à jour une commande
+- `DELETE /api/orders/:id` - Annuler une commande
+
+#### Deliveries
+- `POST /api/deliveries/assign` - Assigner un livreur
+- `GET /api/deliveries/:orderId` - Obtenir une livraison
+- `PUT /api/deliveries/:orderId/status` - Mettre à jour le statut
+- `GET /api/deliveries/drivers/available` - Livreurs disponibles
+- `GET /api/deliveries/drivers/:driverId` - Détails d'un livreur
+
+#### Tracking
+- `POST /api/tracking/start` - Démarrer le tracking
+- `GET /api/tracking/:orderId` - Obtenir le tracking
+- `PUT /api/tracking/:orderId/location` - Mettre à jour la position
+- `PUT /api/tracking/:orderId/complete` - Terminer le tracking
+
+### GraphQL Schema
+
+Voir [docs/graphql-schema.md](./docs/graphql-schema.md)
+
+### gRPC Services
+
+Voir les fichiers `.proto`:
+- [proto/order.proto](./proto/order.proto)
+- [proto/delivery.proto](./proto/delivery.proto)
+- [proto/tracking.proto](./proto/tracking.proto)
+
+---
+
+## 🐳 Déploiement
+
+### Docker Compose complet
+
+Voir [docker-compose.full.yml](./docker-compose.full.yml)
+
+```bash
+docker-compose -f docker-compose.full.yml up -d
+```
+
+### Variables d'environnement
+
+Chaque service a un fichier `.env.example`. Copiez-le en `.env` et configurez:
+
+```bash
+cp order-service/.env.example order-service/.env
+cp delivery-service/.env.example delivery-service/.env
+cp tracking-service/.env.example tracking-service/.env
+cp api-gateway/.env.example api-gateway/.env
+```
+
+---
+
+## 📊 Monitoring
+
+### Kafka Topics
+```bash
+# Lister les topics
+docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
+
+# Consommer les messages
+docker exec -it kafka kafka-console-consumer --topic order.created --bootstrap-server localhost:9092 --from-beginning
+```
+
+### Logs des services
+```bash
+# Order Service
+cd order-service && npm start
+
+# Delivery Service
+cd delivery-service && npm start
+
+# Tracking Service
+cd tracking-service && npm start
+
+# API Gateway
+cd api-gateway && npm start
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Kafka ne démarre pas
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+### Port déjà utilisé
+```bash
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# Linux/Mac
+lsof -ti:3000 | xargs kill -9
+```
+
+### RxDB perd les données
+RxDB est en mémoire. Redémarrez le delivery-service pour réinitialiser les livreurs.
+
+---
+
+## 👥 Contributeurs
+
+- Votre nom
+
+## 📄 Licence
+
+MIT
+
+---
+
+## 🎯 Roadmap
+
+- [ ] Tests unitaires et d'intégration
+- [ ] CI/CD avec GitHub Actions
+- [ ] Monitoring avec Prometheus + Grafana
+- [ ] Authentication JWT
+- [ ] Rate limiting
+- [ ] WebSocket pour tracking temps réel
+- [ ] Application mobile
